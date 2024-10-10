@@ -2,7 +2,6 @@ import { Stack, Typography } from "@mui/material";
 import Icon from "../../../../resources/icon.png";
 import OpenFileButton from "@renderer/components/OpenFileButton";
 import NewFileButton from "@renderer/components/NewFileButton";
-import TempButton from "@renderer/components/TempButton";
 
 const Main = () => {
   return (
@@ -26,7 +25,6 @@ const Main = () => {
       <Stack spacing={2}>
         <NewFileButton />
         <OpenFileButton />
-        <TempButton />
       </Stack>
     </Stack>
   );

@@ -1,12 +1,14 @@
-import { app, shell, BrowserWindow, ipcMain } from "electron";
+import { app, shell, BrowserWindow, ipcMain, dialog } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png?asset";
 import * as path from "path";
 
+let mainWindow: BrowserWindow;
+
 function createWindow(): void {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
     show: false,
@@ -37,6 +39,16 @@ function createWindow(): void {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
 }
+
+// 파일 저장 대화상자를 처리하는 함수
+ipcMain.handle("dialog:saveFile", async () => {
+  const filePath = dialog.showSaveDialogSync(mainWindow, {
+    title: "문제집 만들기",
+    defaultPath: "NewWorkbook.csv", // 기본 파일명
+    filters: [{ name: "Workbook Files", extensions: ["csv"] }], // 파일 형식 필터
+  });
+  return filePath; // 선택된 파일 경로 반환
+});
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
