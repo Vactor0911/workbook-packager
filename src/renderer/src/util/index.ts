@@ -15,7 +15,6 @@ export const saveCsvFile = (path, data: string[][]): void => {
 const isArrayValid = (arr: string[]): boolean => {
   let flag = false;
   for (let i = 0; i < arr.length; i++) {
-    console.log(arr[i]);
     if (arr[i].trim() === "") {
       if (!flag) {
         flag = true;
@@ -28,12 +27,12 @@ const isArrayValid = (arr: string[]): boolean => {
   return true;
 };
 
+export const questionTypes = ["記述", "選択", "完答", "完答O", "選択完答", "選択完答O", "解説"];
+// 서술형, 선택형, 완성형, 완성형 (순서 상관 있음), 선택 완성형, 선택 완성형 (순서 상관 있음), 해설
+
 /**
  * 문제 데이터 유효성 검사
  */
-const questionTypes = ["記述", "選択", "完答", "完答O", "選択完答", "選択完答O", "解説"];
-// 서술형, 선택형, 완성형, 완성형 (순서 상관 있음), 선택 완성형, 선택 완성형 (순서 상관 있음), 해설
-
 export const isQuestionValid = (question: string[]): boolean => {
   try {
     if (!questionTypes.includes(question[0])) {
