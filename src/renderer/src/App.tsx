@@ -1,18 +1,20 @@
-import { CssBaseline } from "@mui/material"
-import { useAtomValue } from "jotai"
-import { csvDataAtom } from "./state"
-import Main from "./pages/Main"
-import Edit from "./pages/Edit"
+import { CssBaseline } from "@mui/material";
+import { useAtomValue } from "jotai";
+import Main from "./pages/Main";
+import Edit from "./pages/Edit";
+import { filePathAtom } from "./state";
 
 const App = (): JSX.Element => {
-  const [csvData, _] = useAtomValue(csvDataAtom)
+  const filePath = useAtomValue(filePathAtom);
+
   return (
     <>
       <CssBaseline />
-      {csvData.length <= 0 && <Main />}
-      {csvData.length > 0 && <Edit />}
+      {filePath === "" && <Main />}
+      {filePath !== "" && <Edit />}
+      <Main />
     </>
-  )
-}
+  );
+};
 
-export default App
+export default App;
