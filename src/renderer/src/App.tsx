@@ -12,7 +12,6 @@ const App = (): JSX.Element => {
       <CssBaseline />
       {filePath === "" && <Main />}
       {filePath !== "" && <Edit />}
-      <Main />
     </>
   );
 };

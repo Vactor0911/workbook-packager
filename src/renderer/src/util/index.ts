@@ -1,4 +1,4 @@
-import { QuestionType } from "./class";
+import { Question, QuestionType } from "./class";
 
 /**
  * 2차원 배열을 CSV 파일로 저장
@@ -30,55 +30,15 @@ const isArrayValid = (arr: string[]): boolean => {
 /**
  * 문제 데이터 유효성 검사
  */
-export const isQuestionValid = (question: string[]): boolean => {
+export const isQuestionValid = (question: Question): boolean => {
   try {
-    if (!Object.values(QuestionType).includes(question[0] as QuestionType)) {
+    if (!Object.values(QuestionType).includes(question.type as QuestionType)) {
       return false;
     }
 
-    switch (question[0]) {
-      case "記述": // 서술형
-        if (question.length < 3) {
-          return false;
-        } else {
-          return isArrayValid(question);
-        }
-        return true;
-      case "選択": // 선택형
-        if (question.length < 4) {
-          return false;
-        } else {
-          return isArrayValid(question);
-        }
-        return true;
-      case "完答":
-      case "完答O": // 완성형
-        if (question.length < 3) {
-          return false;
-        } else {
-          return isArrayValid(question);
-        }
-        return true;
-      case "選択完答":
-      case "選択完答O": // 선택 완성형
-        if (question.length < 4) {
-          return false;
-        } else if (question.length < 4 + Number(question[2]) + Number(question[3])) {
-          return false;
-        } else {
-          return isArrayValid(question);
-        }
-        return true;
-      case "解説": // 해설
-        if (question.length < 2) {
-          return false;
-        } else {
-          return isArrayValid(question);
-        }
-        return true;
-      default:
-        return false;
-    }
+    // TODO: 문제 데이터 유효성 검사
+
+    return true;
   } catch (e) {
     return false;
   }

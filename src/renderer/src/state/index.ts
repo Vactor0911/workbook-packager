@@ -5,4 +5,3 @@ import { atom } from "jotai";
 export const filePathAtom = atom<string>("");
 export const workbookTitleAtom = atom<string>("");
 export const questionsAtom = atom<Question[]>([]);
-export const csvDataAtom = atom<string[][]>([]);

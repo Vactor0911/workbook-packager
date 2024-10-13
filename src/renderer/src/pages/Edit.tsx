@@ -8,20 +8,27 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { useAtom, useAtomValue } from "jotai";
-import { csvDataAtom, filePathAtom } from "../state";
+import { useAtom } from "jotai";
+import { filePathAtom, questionsAtom, workbookTitleAtom } from "../state";
 import SaveIcon from "@mui/icons-material/Save";
 import ReplayIcon from "@mui/icons-material/Replay";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
-import { isQuestionValid, questionTypes } from "@renderer/util";
+import { isQuestionValid } from "@renderer/util";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Question, QuestionType } from "@renderer/util/class";
 
 const Edit = () => {
-  const [filePath] = useAtomValue(filePathAtom);
-  const [csvData, setCsvData] = useAtom(csvDataAtom);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [filePath, setFilePath] = useAtom(filePathAtom);
+  const [workbookTitle, setWorkbookTitle] = useAtom(workbookTitleAtom);
+  const [questions, setQuestions] = useAtom(questionsAtom);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  useEffect(() => {
+    const tfWorkbookTitle = document.getElementById("tf-workbook-title") as HTMLInputElement;
+    tfWorkbookTitle.value = workbookTitle;
+  }, [workbookTitle])
 
   return (
     <Stack width={"100vw"} height={"100vh"} direction={"row"} borderTop={"2px solid #e3e3e3"}>
@@ -35,10 +42,10 @@ const Edit = () => {
       >
         <TextField
           required
-          id="tf-name"
+          id="tf-workbook-title"
           label="문제집 제목"
           variant="outlined"
-          defaultValue={csvData[0][1]}
+          defaultValue={workbookTitle}
         />
         <Divider />
 
@@ -49,8 +56,8 @@ const Edit = () => {
             height: "100%",
           }}
         >
-          {csvData.slice(1).map((row, index) => {
-            const flagValid = isQuestionValid(row);
+          {questions.map((question, index) => {
+            const flagValid = isQuestionValid(question);
             return (
               <ListItemButton
                 key={index}
@@ -70,12 +77,12 @@ const Edit = () => {
                   )}
                 </ListItemIcon>
                 <ListItemText
-                  primary={row[1]}
+                  primary={questions[index].title}
                   primaryTypographyProps={{
                     fontWeight: "bold",
                     fontSize: "1.05em",
                   }}
-                  secondary={row[2]}
+                  secondary={questions[index].answers.join(", ")}
                   css={{
                     "& span, & p": {
                       display: "-webkit-box",
@@ -101,23 +108,20 @@ const Edit = () => {
           sx={{ padding: "10px" }}
           onClick={() => {
             // 맨 처음 문제 유효성 검사
-            if (csvData.length > 1) {
-              const firstRow = csvData[1];
+            if (questions.length > 1) {
               if (
-                firstRow[0] === questionTypes[0] &&
-                firstRow[1] === "새 문제" &&
-                firstRow[2] === "정답"
+                questions[0].type === QuestionType.DESCRIPTION &&
+                questions[0].title === "새 문제" &&
+                questions[0].answers.length === 1 &&
+                questions[0].answers[0] === "정답"
               ) {
                 return;
               }
             }
 
             // 새 문제 추가
-            setCsvData((prev) => [
-              prev[0],
-              [questionTypes[0], "새 문제", "정답"],
-              ...prev.slice(1),
-            ]);
+            const newQuestion = new Question(QuestionType.DESCRIPTION, "새 문제", ["정답"]);
+            setQuestions((prev) => [newQuestion, ...prev]);
 
             // 추가한 문제 선택
             setSelectedIndex(0);
@@ -141,7 +145,8 @@ const Edit = () => {
             variant="outlined"
             startIcon={<ReplayIcon />}
             onClick={() => {
-              setCsvData([[]]);
+              setFilePath("");
+              setQuestions([]);
             }}
           >
             돌아가기
