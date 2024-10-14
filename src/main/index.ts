@@ -19,6 +19,7 @@ function createWindow(): void {
       sandbox: false,
       nodeIntegration: false,
       contextIsolation: true,
+      spellcheck: false,
     },
   });
 
@@ -48,6 +49,11 @@ ipcMain.handle("dialog:saveFile", async () => {
     filters: [{ name: "Workbook Files", extensions: ["csv"] }], // 파일 형식 필터
   });
   return filePath; // 선택된 파일 경로 반환
+});
+
+// 특정 경로로 폴더 탐색기를 열어주는 함수
+ipcMain.on("openFolder", (_, filePath: string) => {
+  shell.showItemInFolder(filePath);
 });
 
 // This method will be called when Electron has finished

@@ -5,8 +5,11 @@ declare global {
     electron: ElectronAPI;
     api: unknown;
     csvAPI: {
-      saveCsvFile: (filePath: string, data: any) => void;
+      saveCsvFile: (filePath: string, data: string) => void;
       saveNewCsvFile: () => Promise<string | undefined>;
+    };
+    fileAPI: {
+      openFolder: (filePath: string) => void;
     };
   }
 }

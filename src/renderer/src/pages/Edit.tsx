@@ -1,6 +1,11 @@
 import {
   Box,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
   FormControl,
   IconButton,
@@ -96,13 +101,20 @@ const Edit = (): EmotionJSX.Element => {
     updateQuestion(selectedIndex); // 이전 문제 데이터 반영
     setSelectedIndex(index); // 선택한 문제 인덱스 저장
     updateQuestionTextField(index); // 현재 문제 데이터 추출
-    console.log(questionType);
   };
 
   const handleQuestionTypeChange = (event: SelectChangeEvent<unknown>): void => {
-    console.log(Object.values(QuestionType)[event.target.value as number]);
     setQuestionType(Object.values(QuestionType)[event.target.value as number]);
   };
+
+  // 알림창
+  const enum AlertType {
+    NONE,
+    SAVE_CONFIRM,
+    SAVE_SUCCESS,
+    SAVE_FAILED,
+  }
+  const [alert, setAlert] = useState(AlertType.NONE);
 
   return (
     <Stack width={"100vw"} height={"100vh"} direction={"row"} borderTop={"2px solid #e3e3e3"}>
@@ -126,7 +138,7 @@ const Edit = (): EmotionJSX.Element => {
               (event.target as HTMLElement).blur();
             }
           }}
-          onBlur={(event) => {
+          onChange={(event) => {
             setWorkbookTitle(event.target.value);
           }}
         />
@@ -175,7 +187,7 @@ const Edit = (): EmotionJSX.Element => {
                   css={{
                     "& span, & p": {
                       display: "-webkit-box",
-                      WebkitLineClamp: "2",
+                      WebkitLineClamp: "1",
                       WebkitBoxOrient: "vertical",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
@@ -196,6 +208,9 @@ const Edit = (): EmotionJSX.Element => {
           startIcon={<AddCircleOutlineIcon />}
           sx={{ padding: "10px" }}
           onClick={() => {
+            // 문제 업데이트
+            updateQuestion(selectedIndex);
+
             // 문제 개수 제한
             if (questions.length >= 100) {
               return;
@@ -225,12 +240,8 @@ const Edit = (): EmotionJSX.Element => {
             variant="contained"
             startIcon={<SaveIcon />}
             onClick={() => {
-              handleSelectedIndexChange(0);
-              const data = [["タイトル", workbookTitle]];
-              questions.forEach((question) => {
-                data.push(questionToCsv(question));
-              });
-              saveCsvFile(filePath, data);
+              updateQuestion(selectedIndex); // 이전 문제 데이터 반영
+              setAlert(AlertType.SAVE_CONFIRM);
             }}
           >
             저장하기
@@ -450,6 +461,113 @@ const Edit = (): EmotionJSX.Element => {
           </Box>
         </Stack>
       )}
+
+      {/* 저장 확인 대화상자 */}
+      <Dialog
+        open={alert === AlertType.SAVE_CONFIRM}
+        onClose={() => setAlert(AlertType.NONE)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title" fontWeight={"bold"}>
+          {"파일 저장"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            파일을 저장하시겠습니까?
+            <br />
+            저장을 진행하기 전 문제집 CSV 파일을 닫아야합니다.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              const data = [["タイトル", workbookTitle]];
+              questions.forEach((question) => {
+                const queue: string[][] = questionToCsv(question);
+                data.push(...queue);
+              });
+
+              const maxLength = Math.max(...data.map((row) => row.length));
+
+              // 각 열의 길이 맞추기
+              data.forEach((row) => {
+                for (let i = 0; i < maxLength - row.length; i++) {
+                  row.push("");
+                }
+              });
+
+              // 파일 저장 및 결과 알림
+              if (saveCsvFile(filePath, data)) {
+                setAlert(AlertType.SAVE_SUCCESS);
+              } else {
+                setAlert(AlertType.SAVE_FAILED);
+              }
+            }}
+          >
+            저장하기
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 저장 성공 대화상자 */}
+      <Dialog
+        open={alert === AlertType.SAVE_SUCCESS}
+        onClose={() => setAlert(AlertType.NONE)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title" fontWeight={"bold"}>
+          {"파일 저장 성공"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            문제집 파일이 성공적으로 저장되었습니다!
+            <br />
+            파일 위치: {filePath}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAlert(AlertType.NONE)}>닫기</Button>
+          <Button
+            onClick={() => {
+              setAlert(AlertType.NONE);
+              window.fileAPI.openFolder(filePath);
+            }}
+            autoFocus
+          >
+            파일 열기
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 저장 실패 대화상자 */}
+      <Dialog
+        open={alert === AlertType.SAVE_FAILED}
+        onClose={() => setAlert(AlertType.NONE)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title" fontWeight={"bold"}>
+          {"파일 저장 실패"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            문제집 파일 저장에 실패하였습니다.
+            <br />
+            파일을 닫은 후 다시 시도해주세요.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setAlert(AlertType.NONE);
+            }}
+          >
+            확인
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 };

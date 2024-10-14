@@ -46,7 +46,7 @@ const OpenFileButton = (): EmotionJSX.Element => {
           // 해설
           if (row[0] === QuestionType.COMMENT) {
             if (question) {
-              question.description = row[1];
+              question.comment = row[1];
             }
             continue;
           }

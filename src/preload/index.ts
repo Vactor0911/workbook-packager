@@ -13,11 +13,14 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld("electron", electronAPI);
     contextBridge.exposeInMainWorld("api", api);
     contextBridge.exposeInMainWorld("csvAPI", {
-      saveCsvFile: (filePath: string, data: string[][]) => {
+      saveCsvFile: (filePath: string, data: string) => {
         const bom = "\uFEFF"; // UTF-8 BOM 추가
         fs.writeFileSync(filePath, bom + data, "utf8");
       },
       saveNewCsvFile: () => ipcRenderer.invoke("dialog:saveFile"),
+    });
+    contextBridge.exposeInMainWorld("fileAPI", {
+      openFolder: (filePath: string) => ipcRenderer.send("openFolder", filePath),
     });
   } catch (error) {
     console.error(error);
