@@ -19,7 +19,7 @@ export class Question {
   title: string;
   answers: string[];
   wrongAnswers: string[];
-  description: string;
+  comment: string;
   hasOrder: boolean;
 
   constructor(
@@ -27,14 +27,14 @@ export class Question {
     title: string = "",
     answers: string[] = [],
     wrongAnswers: string[] = [],
-    description: string = "",
+    comment: string = "",
     hasOrder: boolean = false
   ) {
     this.type = type;
     this.title = title;
     this.answers = answers;
     this.wrongAnswers = wrongAnswers;
-    this.description = description;
+    this.comment = comment;
     this.hasOrder = hasOrder;
   }
 

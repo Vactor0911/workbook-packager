@@ -2,8 +2,9 @@ import { Stack, Typography } from "@mui/material";
 import Icon from "../../../../resources/icon.png";
 import OpenFileButton from "@renderer/components/OpenFileButton";
 import NewFileButton from "@renderer/components/NewFileButton";
+import { EmotionJSX } from "@emotion/react/types/jsx-namespace";
 
-const Main = () => {
+const Main = (): EmotionJSX.Element => {
   return (
     <Stack
       width={"100vw"}

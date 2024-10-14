@@ -6,25 +6,12 @@ import { Question, QuestionType } from "./class";
  */
 export const saveCsvFile = (path, data: string[][]): void => {
   // CSV 형식으로 변환
-  const csvData = data.map((row) => Object.values(row).join(",")).join("\n");
+  const csvData = data
+    .map((row) => Object.values(row).join(",").replaceAll("\n", "<br>"))
+    .join("\n");
 
   // 파일 저장 경로와 데이터 전달
   window.csvAPI.saveCsvFile(path, csvData);
-};
-
-// 배열 유효성 검사
-const isArrayValid = (arr: string[]): boolean => {
-  let flag = false;
-  for (let i = 0; i < arr.length; i++) {
-    if (arr[i].trim() === "") {
-      if (!flag) {
-        flag = true;
-      }
-    } else if (flag) {
-      return false;
-    }
-  }
-  return true;
 };
 
 /**
@@ -42,4 +29,12 @@ export const isQuestionValid = (question: Question): boolean => {
   } catch (e) {
     return false;
   }
+};
+
+/**
+ * 문제 데이터를 CSV 형식으로 변환
+ */
+export const questionToCsv = (question: Question): string[] => {
+  // TODO: 문제 데이터를 CSV 형식으로 변환
+  return [];
 };
