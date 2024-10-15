@@ -1,5 +1,5 @@
 appId: com.electron.app
-productName: workbook-packager
+productName: 문제집 꾸러미
 directories:
   buildResources: build
 files:
