@@ -46,7 +46,7 @@ ipcMain.handle("dialog:saveFile", async () => {
   const filePath = dialog.showSaveDialogSync(mainWindow, {
     title: "문제집 만들기",
     defaultPath: "NewWorkbook.csv", // 기본 파일명
-    filters: [{ name: "Workbook Files", extensions: ["csv"] }], // 파일 형식 필터
+    filters: [{ name: "문제집 파일", extensions: ["csv"] }], // 파일 형식 필터
   });
   return filePath; // 선택된 파일 경로 반환
 });

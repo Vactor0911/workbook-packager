@@ -8,6 +8,7 @@ import {
   DialogTitle,
   Divider,
   FormControl,
+  FormControlLabel,
   IconButton,
   InputAdornment,
   InputLabel,
@@ -34,6 +35,7 @@ import { useEffect, useState } from "react";
 import { Question, QuestionType, QuestionTypeKor } from "@renderer/util/class";
 import { EmotionJSX } from "@emotion/react/types/jsx-namespace";
 import DeleteIcon from "@mui/icons-material/Delete";
+import Checkbox from "@mui/material/Checkbox";
 
 const Edit = (): EmotionJSX.Element => {
   const [filePath, setFilePath] = useAtom(filePathAtom);
@@ -55,7 +57,7 @@ const Edit = (): EmotionJSX.Element => {
   }, [questions]);
 
   // 문제 데이터 업데이트
-  const updateQuestion = (index: number): void => {
+  const updateQuestion = (index: number): Question[] => {
     const newQuestion = new Question(
       questionType,
       questionTitle,
@@ -69,11 +71,10 @@ const Edit = (): EmotionJSX.Element => {
     newQuestion.answers = newQuestion.answers.filter((answer) => answer !== "");
     newQuestion.wrongAnswers = newQuestion.wrongAnswers.filter((answer) => answer !== "");
 
-    setQuestions((prev) => {
-      const newQuestions = prev.slice();
-      newQuestions[index] = newQuestion;
-      return newQuestions;
-    });
+    const newQuestions = questions.slice();
+    newQuestions[index] = newQuestion;
+    setQuestions(newQuestions);
+    return newQuestions;
   };
 
   // 현재 문제 데이터 추출
@@ -84,12 +85,16 @@ const Edit = (): EmotionJSX.Element => {
     }
 
     const selectedQuestion = questions[index];
-    setQuestionType(selectedQuestion.type.replace("O", "") as QuestionType);
-    setQuestionTitle(selectedQuestion.title);
-    setQuestionAnswers(selectedQuestion.answers);
-    setQuestionWrongAnswers(selectedQuestion.wrongAnswers as Array<string>);
-    setQuestionComment(selectedQuestion.comment);
-    setQuestionHasOrder(selectedQuestion.hasOrder);
+    setQuestionType(
+      (selectedQuestion.type.replace("O", "") as QuestionType)
+        ? (selectedQuestion.type as QuestionType)
+        : QuestionType.DESCRIPTION
+    );
+    setQuestionTitle(selectedQuestion.title ? selectedQuestion.title : "");
+    setQuestionAnswers(selectedQuestion.answers.filter((answer) => answer !== ""));
+    setQuestionWrongAnswers(selectedQuestion.wrongAnswers.filter((answer) => answer !== ""));
+    setQuestionComment(selectedQuestion.comment ? selectedQuestion.comment : "");
+    setQuestionHasOrder(selectedQuestion.hasOrder ? selectedQuestion.hasOrder : false);
   };
 
   const handleSelectedIndexChange = (index: number): void => {
@@ -107,12 +112,18 @@ const Edit = (): EmotionJSX.Element => {
     setQuestionType(Object.values(QuestionType)[event.target.value as number]);
   };
 
+  const handleQuestionHasOrderChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    setQuestionHasOrder(event.target.checked);
+  };
+
   // 알림창
   const enum AlertType {
     NONE,
     SAVE_CONFIRM,
     SAVE_SUCCESS,
     SAVE_FAILED,
+    RETURN_CONFIRM,
+    QUESTION_INVALID,
   }
   const [alert, setAlert] = useState(AlertType.NONE);
 
@@ -178,12 +189,17 @@ const Edit = (): EmotionJSX.Element => {
                   )}
                 </ListItemIcon>
                 <ListItemText
-                  primary={questions[index].title.replaceAll("<br>", " ")}
+                  primary={questions[index].title
+                    .replaceAll("<br>", " ")
+                    .replaceAll("<comma>", ",")}
                   primaryTypographyProps={{
                     fontWeight: "bold",
                     fontSize: "1.05em",
                   }}
-                  secondary={questions[index].answers.join(", ").replaceAll("<br>", " ")}
+                  secondary={questions[index].answers
+                    .join(", ")
+                    .replaceAll("<br>", " ")
+                    .replaceAll("<comma>", ",")}
                   css={{
                     "& span, & p": {
                       display: "-webkit-box",
@@ -209,7 +225,9 @@ const Edit = (): EmotionJSX.Element => {
           sx={{ padding: "10px" }}
           onClick={() => {
             // 문제 업데이트
-            updateQuestion(selectedIndex);
+            if (questions.length > 0) {
+              updateQuestion(selectedIndex);
+            }
 
             // 문제 개수 제한
             if (questions.length >= 100) {
@@ -240,7 +258,22 @@ const Edit = (): EmotionJSX.Element => {
             variant="contained"
             startIcon={<SaveIcon />}
             onClick={() => {
-              updateQuestion(selectedIndex); // 이전 문제 데이터 반영
+              const newQuestions = updateQuestion(selectedIndex); // 이전 문제 데이터 반영
+
+              // 문제 유효성 검사
+              let flagError = false;
+              newQuestions.map((question, index) => {
+                if (!isQuestionValid(question)) {
+                  setSelectedIndex(index);
+                  setAlert(AlertType.QUESTION_INVALID);
+                  flagError = true;
+                  return;
+                }
+              });
+              if (flagError) {
+                return;
+              }
+
               setAlert(AlertType.SAVE_CONFIRM);
             }}
           >
@@ -252,8 +285,7 @@ const Edit = (): EmotionJSX.Element => {
             variant="outlined"
             startIcon={<ReplayIcon />}
             onClick={() => {
-              setFilePath("");
-              setQuestions([]);
+              setAlert(AlertType.RETURN_CONFIRM);
             }}
           >
             돌아가기
@@ -293,7 +325,7 @@ const Edit = (): EmotionJSX.Element => {
             id="tf-question-title"
             label="문제"
             variant="outlined"
-            value={questionTitle.replaceAll("<br>", "\n")}
+            value={questionTitle.replaceAll("<br>", "\n").replaceAll("<comma>", ",")}
             onChange={(event) => {
               setQuestionTitle(event.target.value);
             }}
@@ -307,7 +339,7 @@ const Edit = (): EmotionJSX.Element => {
               id="tf-question-answers"
               label="정답"
               variant="outlined"
-              value={questionAnswers[0].replaceAll("<br>", "\n")}
+              value={questionAnswers[0]?.replaceAll("<br>", "\n").replaceAll("<comma>", ",")}
               onChange={(event) => {
                 setQuestionAnswers([event.target.value]);
               }}
@@ -315,7 +347,9 @@ const Edit = (): EmotionJSX.Element => {
           )}
           {/* 정답 수가 여러개인 경우 */}
           {(questionType == QuestionType.COMPLETION ||
-            questionType == QuestionType.CHOICE_COMPLETION) && (
+            questionType == QuestionType.COMPLETION_ORDER ||
+            questionType == QuestionType.CHOICE_COMPLETION ||
+            questionType == QuestionType.CHOICE_COMPLETION_ORDER) && (
             <Stack width={"100%"}>
               <h4 style={{ margin: "0", color: "#2979ff" }}>
                 정답 <span style={{ fontSize: "1.2em", fontWeight: "bold", color: "red" }}>*</span>
@@ -333,7 +367,7 @@ const Edit = (): EmotionJSX.Element => {
                       multiline
                       id="tf-question-wrong-answers"
                       label={`오답 ${index + 1}`}
-                      value={answer.replaceAll("<br>", "\n")}
+                      value={answer?.replaceAll("<br>", "\n").replaceAll("<comma>", ",")}
                       onChange={(event) => {
                         const newAnswers = questionAnswers.slice();
                         newAnswers[index] = event.target.value;
@@ -371,6 +405,21 @@ const Edit = (): EmotionJSX.Element => {
                   정답 추가
                 </Button>
               </Box>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={questionHasOrder}
+                    onChange={handleQuestionHasOrderChange}
+                    inputProps={{ "aria-label": "controlled" }}
+                  />
+                }
+                label="답변 순서를 정답 판정에 포함"
+                style={{
+                  marginTop: "10px",
+                  alignSelf: "center",
+                  color: questionHasOrder ? "#2979ff" : "black",
+                }}
+              />
             </Stack>
           )}
           {/* 오답 */}
@@ -394,7 +443,7 @@ const Edit = (): EmotionJSX.Element => {
                       multiline
                       id="tf-question-wrong-answers"
                       label={`오답 ${index + 1}`}
-                      value={wrongAnswer.replaceAll("<br>", "\n")}
+                      value={wrongAnswer.replaceAll("<br>", "\n").replaceAll("<comma>", ",")}
                       onChange={(event) => {
                         const newWrongAnswers = questionWrongAnswers.slice();
                         newWrongAnswers[index] = event.target.value;
@@ -439,7 +488,7 @@ const Edit = (): EmotionJSX.Element => {
             id="tf-question-comment"
             label="해설"
             variant="outlined"
-            value={questionComment.replaceAll("<br>", "\n")}
+            value={questionComment.replaceAll("<br>", "\n").replaceAll("<comma>", ",")}
             onChange={(event) => {
               setQuestionComment(event.target.value);
             }}
@@ -462,6 +511,7 @@ const Edit = (): EmotionJSX.Element => {
         </Stack>
       )}
 
+      {/* 대화상자 */}
       {/* 저장 확인 대화상자 */}
       <Dialog
         open={alert === AlertType.SAVE_CONFIRM}
@@ -482,6 +532,14 @@ const Edit = (): EmotionJSX.Element => {
         <DialogActions>
           <Button
             onClick={() => {
+              setAlert(AlertType.NONE);
+            }}
+            autoFocus
+          >
+            취소
+          </Button>
+          <Button
+            onClick={() => {
               const data = [["タイトル", workbookTitle]];
               questions.forEach((question) => {
                 const queue: string[][] = questionToCsv(question);
@@ -492,7 +550,8 @@ const Edit = (): EmotionJSX.Element => {
 
               // 각 열의 길이 맞추기
               data.forEach((row) => {
-                for (let i = 0; i < maxLength - row.length; i++) {
+                const length = row.length;
+                for (let i = 0; i < maxLength - length; i++) {
                   row.push("");
                 }
               });
@@ -563,6 +622,73 @@ const Edit = (): EmotionJSX.Element => {
             onClick={() => {
               setAlert(AlertType.NONE);
             }}
+          >
+            확인
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 돌아가기 경고 대화상자 */}
+      <Dialog
+        open={alert === AlertType.RETURN_CONFIRM}
+        onClose={() => setAlert(AlertType.NONE)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title" fontWeight={"bold"}>
+          {"돌아가기"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            저장되지 않은 정보는 모두 손실됩니다.
+            <br />
+            정말 메인으로 돌아가시겠습니까?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setAlert(AlertType.NONE);
+            }}
+            autoFocus
+          >
+            취소
+          </Button>
+          <Button
+            onClick={() => {
+              setAlert(AlertType.NONE);
+              setFilePath("");
+              setQuestions([]);
+            }}
+          >
+            확인
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 문제 오류 대화상자 */}
+      <Dialog
+        open={alert === AlertType.QUESTION_INVALID}
+        onClose={() => setAlert(AlertType.NONE)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title" fontWeight={"bold"}>
+          {"문제 오류"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            문제 데이터가 올바르지 않습니다.
+            <br />
+            데이터를 올바르게 수정한 후 다시 시도해주세요.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setAlert(AlertType.NONE);
+            }}
+            autoFocus
           >
             확인
           </Button>

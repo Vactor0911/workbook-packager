@@ -8,7 +8,13 @@ export const saveCsvFile = (path, data: string[][]): boolean => {
   try {
     // CSV 형식으로 변환
     const csvData = data
-      .map((row) => Object.values(row).join(",").replaceAll("\n", "<br>"))
+      .map((row) =>
+        Object.values(row)
+          .join("\\")
+          .replaceAll("\n", "<br>")
+          .replaceAll(",", "<comma>")
+          .replaceAll("\\", ",")
+      )
       .join("\n");
 
     // 파일 저장 경로와 데이터 전달
@@ -24,11 +30,20 @@ export const saveCsvFile = (path, data: string[][]): boolean => {
  */
 export const isQuestionValid = (question: Question): boolean => {
   try {
+    // 문제 유형
     if (!Object.values(QuestionType).includes(question.type as QuestionType)) {
       return false;
     }
 
-    // TODO: 문제 데이터 유효성 검사
+    // 문제 제목
+    if (question.title === "") {
+      return false;
+    }
+
+    // 정답
+    if (question.answers.filter((answer) => answer !== "").length <= 0) {
+      return false;
+    }
 
     return true;
   } catch (e) {
@@ -50,19 +65,26 @@ export const questionToCsv = (question: Question): string[][] => {
       result.push([question.type, question.title, question.answers[0], ...question.wrongAnswers]);
       break;
     case QuestionType.COMPLETION:
-    case QuestionType.COMPLETION_ORDER:
-      result.push([question.type, question.title, ...question.answers]);
+    case QuestionType.COMPLETION_ORDER: {
+      const type = question.hasOrder ? QuestionType.COMPLETION_ORDER : QuestionType.COMPLETION;
+      result.push([type, question.title, ...question.answers]);
       break;
+    }
     case QuestionType.CHOICE_COMPLETION:
     case QuestionType.CHOICE_COMPLETION_ORDER:
-      result.push([
-        question.type,
-        question.title,
-        question.answers.length.toString(),
-        question.wrongAnswers.length.toString(),
-        ...question.answers,
-        ...question.wrongAnswers,
-      ]);
+      {
+        const type = question.hasOrder
+          ? QuestionType.CHOICE_COMPLETION_ORDER
+          : QuestionType.CHOICE_COMPLETION;
+        result.push([
+          type,
+          question.title,
+          question.answers.length.toString(),
+          question.wrongAnswers.length.toString(),
+          ...question.answers,
+          ...question.wrongAnswers,
+        ]);
+      }
       break;
   }
 

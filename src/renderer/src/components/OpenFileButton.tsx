@@ -94,7 +94,7 @@ const OpenFileButton = (): EmotionJSX.Element => {
           }
 
           // 정답 순서성 여부
-          const hasOrder = type[-1] === "O";
+          const hasOrder = type[type.length - 1] === "O";
 
           // 문제 객체 생성
           question = new Question(modifiedType, title, answers, wrongAnswers, "", hasOrder);
