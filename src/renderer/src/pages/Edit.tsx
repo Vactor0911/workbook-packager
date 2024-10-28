@@ -24,7 +24,7 @@ import {
   TextField,
 } from "@mui/material";
 import { useAtom } from "jotai";
-import { filePathAtom, questionsAtom, workbookTitleAtom } from "../state";
+import { alertAtom, AlertType, filePathAtom, questionsAtom, workbookTitleAtom } from "../state";
 import SaveIcon from "@mui/icons-material/Save";
 import ReplayIcon from "@mui/icons-material/Replay";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
@@ -117,15 +117,7 @@ const Edit = (): EmotionJSX.Element => {
   };
 
   // 알림창
-  const enum AlertType {
-    NONE,
-    SAVE_CONFIRM,
-    SAVE_SUCCESS,
-    SAVE_FAILED,
-    RETURN_CONFIRM,
-    QUESTION_INVALID,
-  }
-  const [alert, setAlert] = useState(AlertType.NONE);
+  const [alert, setAlert] = useAtom(alertAtom);
 
   return (
     <Stack width={"100vw"} height={"100vh"} direction={"row"} borderTop={"2px solid #e3e3e3"}>
